@@ -14,6 +14,8 @@ local bToggleDelay = false
 
 local szMenuTitle = "ScrasaHook - Dev Build [0.0.1]"
 
+local bAimbotToggle = false
+
 ---------------------------- GLOBAL VARS ----------------------------------
 function centerTxtX(width, szString)
     local strLen = string.len(szString)
@@ -117,6 +119,7 @@ function drawMenu()
 
     local aimbotSubMenu = nil
     local espSubMenu = nil
+    local aimbotCheckBox = nil
 
     aimbotButton.Paint = function(self, w, h)
         surface.SetDrawColor(55, 55, 55, 255)
@@ -132,13 +135,9 @@ function drawMenu()
                 aimbotSubMenu = vgui.Create("SubMenuPanel", mainMenuWindow)
                 aimbotSubMenu:SetPos(menuSidePanel:GetWide(), menuBar:GetTall())   
 
-                aimbotSubMenu.Paint = function(self, w, h)
-                    local aimbotCheckBox = aimbotSubMenu:Add("DCheckBox")
-                    aimbotCheckBox:SetPos(aimbotSubMenu:GetWide() * 0.05, aimbotSubMenu:GetTall() * 0.025)
-                    aimbotCheckBox:SetValue(true)
-                   -- aimbotCheckBox:SetText("Aimbot ON/OFF")
-                end
-                
+                if (IsValid(aimbotSubMenu)) then 
+                    
+                end 
             end
             bTestPressed = true
             if (IsValid(espSubMenu) and espSubMenu != nil) then 
@@ -153,6 +152,16 @@ function drawMenu()
         end
     end
 
+    if (!IsValid(aimbotCheckBox))  then 
+        aimbotCheckBox = aimbotSubMenu:Add("DCheckBoxLabel")
+        aimbotCheckBox:SetPos(aimbotSubMenu:GetWide() * 0.05, aimbotSubMenu:GetTall() * 0.025)
+        aimbotCheckBox:SetText("Aimbot ON/OFF")
+        if (aimbotCheckBox:GetChecked()) then 
+            bAimbotToggle = true -- is checked
+        else 
+            bAimbotToggle = false -- is not checked
+        end
+    end
 
     local espButton = vgui.Create("MenuButtonSidePanel", menuSidePanel)
     espButton:SetPos(espButton:GetX(), aimbotButton:GetTall())
@@ -197,7 +206,42 @@ end -- If Click on a button close all other SubMenuPanels, Need to stay the pane
 
 ---------------------------- VGUI SHIT ----------------------------------
 
+
+---------------------------- Aimbot ----------------------------------
+
+function calcAngle(vFrom, vTo)
+
+    local retAngles = Vector(0, 0, 0)
+
+    local vOrigin = vTo - vFrom
+
+    local hypotenuse = math.sqrt(vOrigin.x * vOrigin.x + vOrigin.y * vOrigin.y + vOrigin.z * vOrigin.z)
+
+    retAngles.y = math.atan2(vOrigin.y, vOrigin.x) * (180 / 3.14)
+    retAngles.x = -(math.asin(vOrigin.z / hypotenuse) * (180 / 3.14))
+    retAngles.z = 0
+
+    -- x = pitch up down
+    -- y = yaw left right
+
+    return retAngles
+
+end
+
+---------------------------- Aimbot ----------------------------------
 ---------------------------- HOOKS ----------------------------------
+
+hook.Add("CreateMove", "CreateMoveHook", function(cmd)
+
+   -- print(bAimbotToggle)
+    if (bAimbotToggle) then
+        local meta = FindMetaTable("Player")
+        -- Aimbot Code Goes Here
+        local aimbotAngles = calcAngle(localPlayer:GetPos(), Entity(2):GetPos())
+        cmd:SetViewAngles( Angle(aimbotAngles.x, aimbotAngles.y, aimbotAngles.z) )
+    end
+
+end)
 
 hook.Add("Tick", "InputCheck", function()
 
