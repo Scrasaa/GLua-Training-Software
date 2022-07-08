@@ -13,6 +13,7 @@ local bToggle = false
 local bToggleDelay = false
 
 local szMenuTitle = "ScrasaHook - Dev Build [0.0.1]"
+
 ---------------------------- GLOBAL VARS ----------------------------------
 function centerTxtX(width, szString)
     local strLen = string.len(szString)
@@ -74,24 +75,20 @@ function drawMenu()
 --------------------------MENU BUTTONS---------------------------------
 
     local menuButtons = {}
-    menuButtons.ColorIdle = Color(255, 0, 0)
-    menuButtons.ColorHovered = Color(0, 255, 0)
 
     function menuButtons:Init()
         self:SetSize(menuSidePanel:GetWide(), menuSidePanel:GetTall() * 0.075)
         self:SetPos(0, 0)
+        self:SetText("")
     end
 
     function menuButtons:Paint(w, h)
-        local color = self.ColorIdle
-
-        if self:IsHovered() then
-            color = self.ColorHovered
-        end
-
-        surface.SetDrawColor(color)
+        surface.SetDrawColor(55, 55, 55, 255)
         surface.DrawRect(0, 0, w, h)
+        surface.SetDrawColor(255, 136, 0, 255)
+        surface.DrawOutlinedRect(0, 0, w, h, 1)
     end
+ 
 
     vgui.Register("MenuButtonSidePanel", menuButtons, "DButton")
 
@@ -106,7 +103,7 @@ function drawMenu()
     end
 
     function menuSubMenus:Paint(w, h)
-        surface.SetDrawColor(255, 255, 0)
+        surface.SetDrawColor(50, 50, 50, 255)
         surface.DrawRect(0, 0, w, h)
     end
 
@@ -115,48 +112,71 @@ function drawMenu()
 -----------------------------TEST BUTTON------------------------------
 
     local testButton = vgui.Create("MenuButtonSidePanel", menuSidePanel)
-    testButton:SetText("Test")
 
     local bTestPressed = false
-    local testSubMenu = {}
+
+    local testSubMenu = nil
+    local testSubMenu2 = nil
+
+    testButton.Paint = function(self, w, h)
+        surface.SetDrawColor(55, 55, 55, 255)
+        surface.DrawRect(0, 0, w, h)
+        surface.SetDrawColor(255, 136, 0, 255)
+        surface.DrawOutlinedRect(0, 0, w, h, 1)
+        draw.DrawText("Test1", "fMenuTitle", self:GetWide() / 2, self:GetTall() / 4, Color(255, 136, 0), TEXT_ALIGN_CENTER)
+    end
 
     testButton.DoClick = function()
         if (bTestPressed == false) then
-            testSubMenu = vgui.Create("SubMenuPanel", mainMenuWindow)
-            testSubMenu:SetPos(menuSidePanel:GetWide(), menuBar:GetTall())
+            if (testSubMenu == nil) then
+                testSubMenu = vgui.Create("SubMenuPanel", mainMenuWindow)
+                testSubMenu:SetPos(menuSidePanel:GetWide(), menuBar:GetTall())   
+            end
             bTestPressed = true
+            if (IsValid(testSubMenu2) and testSubMenu2 != nil) then 
+                testSubMenu2:Hide()
+            end
+            testSubMenu:Show()
         else
             bTestPressed = false
             if (IsValid(testSubMenu)) then
-                testSubMenu:Remove()
+                testSubMenu:Hide()
             end
         end
     end
 
 
     local testButton2 = vgui.Create("MenuButtonSidePanel", menuSidePanel)
-    testButton2:SetText("Test2")
-    testButton2:SetPos(testButton2:GetX(), testButton:GetTall())
+    testButton2:SetPos(testButton2:GetX(), testButton:GetTall() + 1)
+
 
     local bTestPressed2 = false
-    local testSubMenu2 = {}
 
     testButton2.DoClick = function()
         if (bTestPressed2 == false) then
-            testSubMenu2 = vgui.Create("SubMenuPanel", mainMenuWindow)
-            testSubMenu2:SetPos(menuSidePanel:GetWide(), menuBar:GetTall())
-            testSubMenu2.Paint = function(self, w, h)
-                surface.SetDrawColor(125,5,255)
-                surface.DrawRect(0, 0, w, h)
+            if (testSubMenu2 == nil) then
+                testSubMenu2 = vgui.Create("SubMenuPanel", mainMenuWindow)
+                testSubMenu2:SetPos(menuSidePanel:GetWide(), menuBar:GetTall())
+
+                testSubMenu2.Paint = function(self, w, h)
+                    surface.SetDrawColor(50, 50, 50)
+                    surface.DrawRect(0, 0, w, h)
+                end
             end
+            -- Closes other subMenuPanel so its not drawing over it~ just a little performance
             bTestPressed2 = true
+            if (IsValid(testSubMenu) and testSubMenu != nil) then 
+                testSubMenu:Hide()
+            end
+            testSubMenu2:Show()
         else
             bTestPressed2 = false
             if (IsValid(testSubMenu2)) then
-                testSubMenu2:Remove()
+                testSubMenu2:Hide()
             end
         end
     end
+
 end -- If Click on a button close all other SubMenuPanels, Need to stay the panel open when its closed, just hide it.
 
 ---------------------------- VGUI SHIT ----------------------------------
@@ -167,7 +187,11 @@ hook.Add("Tick", "InputCheck", function()
 
     if (input.IsKeyDown(KEY_INSERT) and !bMenuOpen and !bToggleDelay) then 
 
-        drawMenu()
+        if (IsValid(mainMenuWindow) and !mainMenuWindow:IsVisible()) then
+            mainMenuWindow:Show()
+        else
+            drawMenu()
+        end
 
         bMenuOpen = true
 
@@ -182,7 +206,7 @@ hook.Add("Tick", "InputCheck", function()
         bMenuOpen = false
 
         if (IsValid(mainMenuWindow)) then
-            mainMenuWindow:Close()
+            mainMenuWindow:Hide()
         end
 
         bToggleDelay = !bToggleDelay
