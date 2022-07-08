@@ -111,68 +111,84 @@ function drawMenu()
 
 -----------------------------TEST BUTTON------------------------------
 
-    local testButton = vgui.Create("MenuButtonSidePanel", menuSidePanel)
+    local aimbotButton = vgui.Create("MenuButtonSidePanel", menuSidePanel)
 
     local bTestPressed = false
 
-    local testSubMenu = nil
-    local testSubMenu2 = nil
+    local aimbotSubMenu = nil
+    local espSubMenu = nil
 
-    testButton.Paint = function(self, w, h)
+    aimbotButton.Paint = function(self, w, h)
         surface.SetDrawColor(55, 55, 55, 255)
         surface.DrawRect(0, 0, w, h)
         surface.SetDrawColor(255, 136, 0, 255)
         surface.DrawOutlinedRect(0, 0, w, h, 1)
-        draw.DrawText("Test1", "fMenuTitle", self:GetWide() / 2, self:GetTall() / 4, Color(255, 136, 0), TEXT_ALIGN_CENTER)
+        draw.DrawText("Aimbot", "fMenuTitle", self:GetWide() / 2, self:GetTall() / 5, Color(255, 136, 0), TEXT_ALIGN_CENTER)
     end
 
-    testButton.DoClick = function()
+    aimbotButton.DoClick = function()
         if (bTestPressed == false) then
-            if (testSubMenu == nil) then
-                testSubMenu = vgui.Create("SubMenuPanel", mainMenuWindow)
-                testSubMenu:SetPos(menuSidePanel:GetWide(), menuBar:GetTall())   
+            if (aimbotSubMenu == nil) then
+                aimbotSubMenu = vgui.Create("SubMenuPanel", mainMenuWindow)
+                aimbotSubMenu:SetPos(menuSidePanel:GetWide(), menuBar:GetTall())   
+
+                aimbotSubMenu.Paint = function(self, w, h)
+                    local aimbotCheckBox = aimbotSubMenu:Add("DCheckBox")
+                    aimbotCheckBox:SetPos(aimbotSubMenu:GetWide() * 0.05, aimbotSubMenu:GetTall() * 0.025)
+                    aimbotCheckBox:SetValue(true)
+                   -- aimbotCheckBox:SetText("Aimbot ON/OFF")
+                end
+                
             end
             bTestPressed = true
-            if (IsValid(testSubMenu2) and testSubMenu2 != nil) then 
-                testSubMenu2:Hide()
+            if (IsValid(espSubMenu) and espSubMenu != nil) then 
+                espSubMenu:Hide()
             end
-            testSubMenu:Show()
+            aimbotSubMenu:Show()
         else
             bTestPressed = false
-            if (IsValid(testSubMenu)) then
-                testSubMenu:Hide()
+            if (IsValid(aimbotSubMenu)) then
+                aimbotSubMenu:Hide()
             end
         end
     end
 
 
-    local testButton2 = vgui.Create("MenuButtonSidePanel", menuSidePanel)
-    testButton2:SetPos(testButton2:GetX(), testButton:GetTall() + 1)
+    local espButton = vgui.Create("MenuButtonSidePanel", menuSidePanel)
+    espButton:SetPos(espButton:GetX(), aimbotButton:GetTall())
+
+    espButton.Paint = function(self, w, h)
+        surface.SetDrawColor(55, 55, 55, 255)
+        surface.DrawRect(0, 0, w, h)
+        surface.SetDrawColor(255, 136, 0, 255)
+        surface.DrawOutlinedRect(0, 0, w, h, 1)
+        draw.DrawText("ESP", "fMenuTitle", self:GetWide() / 2, self:GetTall() / 5, Color(255, 136, 0), TEXT_ALIGN_CENTER)
+    end
 
 
     local bTestPressed2 = false
 
-    testButton2.DoClick = function()
+    espButton.DoClick = function()
         if (bTestPressed2 == false) then
-            if (testSubMenu2 == nil) then
-                testSubMenu2 = vgui.Create("SubMenuPanel", mainMenuWindow)
-                testSubMenu2:SetPos(menuSidePanel:GetWide(), menuBar:GetTall())
+            if (espSubMenu == nil) then
+                espSubMenu = vgui.Create("SubMenuPanel", mainMenuWindow)
+                espSubMenu:SetPos(menuSidePanel:GetWide(), menuBar:GetTall())
 
-                testSubMenu2.Paint = function(self, w, h)
+                espSubMenu.Paint = function(self, w, h)
                     surface.SetDrawColor(50, 50, 50)
                     surface.DrawRect(0, 0, w, h)
                 end
             end
             -- Closes other subMenuPanel so its not drawing over it~ just a little performance
             bTestPressed2 = true
-            if (IsValid(testSubMenu) and testSubMenu != nil) then 
-                testSubMenu:Hide()
+            if (IsValid(aimbotSubMenu) and aimbotSubMenu != nil) then 
+                aimbotSubMenu:Hide()
             end
-            testSubMenu2:Show()
+            espSubMenu:Show()
         else
             bTestPressed2 = false
-            if (IsValid(testSubMenu2)) then
-                testSubMenu2:Hide()
+            if (IsValid(espSubMenu)) then
+                espSubMenu:Hide()
             end
         end
     end
