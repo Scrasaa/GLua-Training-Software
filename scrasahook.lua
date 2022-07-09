@@ -15,9 +15,16 @@ local bToggleDelay = false
 local szMenuTitle = "ScrasaHook - Dev Build [0.0.1]"
 
 --------------------------------- SETTINGS ------------------------------------------
-local bAimbotToggle = false
 local bESPToggle = false
+local bESPdrawVisible = false
+local ESPColorVisible = Color(0, 255, 0, 255)
+local ESPColorInvisible = Color(255, 0, 0, 255)
+local bDrawFOVCircle = false
+
+local bAimbotToggle = false
 local bRecoilToggle = false
+local bAimbotIgnoreJob = false
+local szJobIgnore = ""
 local fAimbotFOV = 10
 ---------------------------- GLOBAL VARS ----------------------------------
 function centerTxtX(width, szString)
@@ -130,10 +137,6 @@ function drawMenu()
 
     local aimbotSubMenu = nil
     local espSubMenu = nil
-    local aimbotCheckBox = nil
-    local bAimbotCheckBoxCreated = false
-    local bAimbotFovSliderCreated = false
-    local bRecoilCheckBoxCreated = false
 
     aimbotButton.Paint = function(self, w, h)
         surface.SetDrawColor(55, 55, 55, 255)
@@ -149,50 +152,73 @@ function drawMenu()
                 aimbotSubMenu = vgui.Create("SubMenuPanel", mainMenuWindow)
                 aimbotSubMenu:SetPos(menuSidePanel:GetWide(), menuBar:GetTall())   
 
-                if (bAimbotFovSliderCreated == false) then
-                    local aimbotFovSlider = aimbotSubMenu:Add("DNumSlider")
-                    aimbotFovSlider:SetPos(aimbotSubMenu:GetWide() * 0.05, aimbotSubMenu:GetTall() * 0.05)
-                    aimbotFovSlider:SetSize(aimbotSubMenu:GetWide() * 0.5, aimbotSubMenu:GetTall() * 0.1)
-                    aimbotFovSlider:SetText("Aimbot FOV")
-                    aimbotFovSlider:SetMin(0)
-                    aimbotFovSlider:SetMax(360)
 
-                    aimbotFovSlider.OnValueChanged = function(self, value)
-                        fAimbotFOV = value
-                    end
-                    bAimbotFovSliderCreated = true
+                local aimbotFovSlider = aimbotSubMenu:Add("DNumSlider")
+                aimbotFovSlider:SetPos(aimbotSubMenu:GetWide() * 0.05, aimbotSubMenu:GetTall() * 0.05)
+                aimbotFovSlider:SetSize(aimbotSubMenu:GetWide() * 0.5, aimbotSubMenu:GetTall() * 0.1)
+                aimbotFovSlider:SetText("Aimbot FOV")
+                aimbotFovSlider:SetMin(0)
+                aimbotFovSlider:SetMax(360)
+
+                aimbotFovSlider.OnValueChanged = function(self, value)
+                    fAimbotFOV = value
                 end
+                bAimbotFovSliderCreated = true
+            
 
-                if (bRecoilCheckBoxCreated == false) then 
-                    local recoilCheckBox = aimbotSubMenu:Add("DCheckBoxLabel")
-                    bAimbotCheckBoxCreated = true
-                    recoilCheckBox:SetPos(aimbotSubMenu:GetWide() * 0.05, aimbotSubMenu:GetTall() * 0.06)
-                    recoilCheckBox:SetText("Recoil ON/OFF (M9K ONLY)")
-                    function recoilCheckBox:OnChange(val)
-                        if val then 
-                            bRecoilToggle = true
-                        else
-                            bRecoilToggle = false
-                        end
+                local recoilCheckBox = aimbotSubMenu:Add("DCheckBoxLabel")
+                recoilCheckBox:SetPos(aimbotSubMenu:GetWide() * 0.05, aimbotSubMenu:GetTall() * 0.06)
+                recoilCheckBox:SetText("Recoil ON/OFF (M9K ONLY)")
+                function recoilCheckBox:OnChange(val)
+                    if val then 
+                        bRecoilToggle = true
+                    else
+                        bRecoilToggle = false
                     end
                 end
 
-                if (aimbotSubMenu != nil and aimbotCheckBox == nil) then 
-                    aimbotCheckBox = aimbotSubMenu:Add("DCheckBoxLabel")
-                    bAimbotCheckBoxCreated = true
-                    aimbotCheckBox:SetPos(aimbotSubMenu:GetWide() * 0.05, aimbotSubMenu:GetTall() * 0.025)
-                    aimbotCheckBox:SetText("Aimbot ON/OFF")
-                    function aimbotCheckBox:OnChange(val)
-                        if val then 
-                            bAimbotToggle = true
-                        else
-                            bAimbotToggle = false
-                        end
+                local jobSelectBox = aimbotSubMenu:Add("DComboBox")
+                jobSelectBox:SetPos(aimbotSubMenu:GetWide() * 0.6, aimbotSubMenu:GetTall() * 0.025)
+                jobSelectBox:SetSize(aimbotSubMenu:GetWide() * 0.125, aimbotSubMenu:GetTall() * 0.025)
+                jobSelectBox:SetValue("Ignore Jobs")
+
+                local jobTable = {}
+
+                for _, v in pairs(player.GetAll()) do 
+                    if (table.HasValue(jobTable, v:getDarkRPVar("job"))) then continue end
+                    table.insert(jobTable, v:getDarkRPVar("job"))
+                    jobSelectBox:AddChoice(v:getDarkRPVar("job"))
+                end
+                jobSelectBox.OnSelect = function(index, value, data)
+                    szJobIgnore = data
+                    print (value)
+                end
+
+                local ignoreJobCheckBox = aimbotSubMenu:Add("DCheckBoxLabel")
+                ignoreJobCheckBox:SetPos(aimbotSubMenu:GetWide() * 0.6, aimbotSubMenu:GetTall() * 0.06)
+                ignoreJobCheckBox:SetText("Ignore Job ON/OFF")
+                function ignoreJobCheckBox:OnChange(val)
+                    if val then 
+                        bAimbotIgnoreJob = true
+                    else
+                        bAimbotIgnoreJob = false
+                    end
+                end
+            
+                local aimbotCheckBox = aimbotSubMenu:Add("DCheckBoxLabel")
+                aimbotCheckBox:SetPos(aimbotSubMenu:GetWide() * 0.05, aimbotSubMenu:GetTall() * 0.025)
+                aimbotCheckBox:SetText("Aimbot ON/OFF")
+                function aimbotCheckBox:OnChange(val)
+                    if val then 
+                        bAimbotToggle = true
+                    else
+                        bAimbotToggle = false
                     end
                 end
             end
+    
             bTestPressed = true
-            if (IsValid(espSubMenu) and espSubMenu != nil) then 
+            if (IsValid(espSubMenu)) then 
                 espSubMenu:Hide()
             end
             aimbotSubMenu:Show()
@@ -217,8 +243,6 @@ function drawMenu()
 
     local bTestPressed2 = false
 
-    local bESPCheckBoxCreated = false
-
     espButton.DoClick = function()
         if (bTestPressed2 == false) then
             if (espSubMenu == nil) then
@@ -233,7 +257,6 @@ function drawMenu()
                 
                 if (espSubMenu != nil) then 
                     local espCheckBox = espSubMenu:Add("DCheckBoxLabel")
-                    bESPCheckBoxCreated = true
                     espCheckBox:SetPos(espSubMenu:GetWide() * 0.05, espSubMenu:GetTall() * 0.025)
                     espCheckBox:SetText("ESP ON/OFF")
                     function espCheckBox:OnChange(val)
@@ -241,6 +264,29 @@ function drawMenu()
                             bESPToggle = true
                         else
                             bESPToggle = false
+                        end
+                    end
+
+                    local espDrawVisibleCheckBox = espSubMenu:Add("DCheckBoxLabel")
+                    espDrawVisibleCheckBox:SetPos(espSubMenu:GetWide() * 0.05, espSubMenu:GetTall() * 0.05)
+                    espDrawVisibleCheckBox:SetText("Only Visible ON/OFF")
+                    function espDrawVisibleCheckBox:OnChange(val)
+                        if val then 
+                            bESPdrawVisible = true
+                        else
+                            bESPdrawVisible = false
+                        end
+                    end
+
+
+                    local espDrawFOVCircleCheckBox = espSubMenu:Add("DCheckBoxLabel")
+                    espDrawFOVCircleCheckBox:SetPos(espSubMenu:GetWide() * 0.05, espSubMenu:GetTall() * 0.075)
+                    espDrawFOVCircleCheckBox:SetText("Draw FOV Circle ON/OFF")
+                    function espDrawFOVCircleCheckBox:OnChange(val)
+                        if val then 
+                            bDrawFOVCircle = true
+                        else
+                            bDrawFOVCircle = false
                         end
                     end
                 end
@@ -350,6 +396,25 @@ function calcBoundedBoxes(players)
 end
 ---------------------------- ESP ----------------------------------
 
+---------------------------- MISC ----------------------------------
+
+function IsVisible(pEnt)
+    local tr = util.TraceLine( 
+        {
+            start = localPlayer:EyePos(),
+            endpos = pEnt:EyePos(),
+            filter = function(ent)
+                if (IsValid(ent) and ent != localPlayer and ent:IsPlayer() and ent:Health() <= 0 and ent == pEnt) then 
+                    return ent
+                end
+            end,
+            mask = MASK_SHOT_HULL,
+        }
+    )
+    return !tr.Hit
+end
+---------------------------- MISC ----------------------------------
+
 ---------------------------- HOOKS ----------------------------------
 
 hook.Add("CreateMove", "CreateMoveHook", function(cmd)
@@ -358,6 +423,7 @@ hook.Add("CreateMove", "CreateMoveHook", function(cmd)
         if (bAimbotToggle) then
             local closestEnt = GetClosestByFov(cmd:GetViewAngles())
             if (closestEnt == nil) then return end
+            if (bAimbotIgnoreJob and closestEnt:getDarkRPVar("job") == szJobIgnore) then return end
             -- Aimbot Code Goes Here
             local matrix = closestEnt:GetBoneMatrix(closestEnt:LookupBone("ValveBiped.Bip01_Head1")) -- head
             local pos = matrix:GetTranslation()
@@ -419,24 +485,35 @@ hook.Add("Tick", "InputCheck", function()
         timer.Simple( 0.5, function() bToggleDelay = !bToggleDelay end)
 
     end
+
+    --("Ent is visible: " .. tostring(IsVisible(Entity(2))) .. " Ent Name: " .. Entity(2):GetName())
     
+
 end)
 
 hook.Add( "HUDPaint", "DrawHUD", function()
     
     if (bESPToggle) then  
-        surface.DrawCircle( ScrW()/2, ScrH()/2, fAimbotFOV * 10, Color( 255, 120, 0 ) )
+        
+        if (bDrawFOVCircle) then surface.DrawCircle( ScrW()/2, ScrH()/2, fAimbotFOV * 10, Color( 255, 120, 0 ) ) end
+
+        local color = Color(255, 255, 255, 255)
 
         for k, players in pairs (player.GetAll()) do 
             if (players == localPlayer or players == nil or players:Health() <= 0) then continue end
+            if (bESPdrawVisible) then if (!IsVisible(players)) then continue end end
+            if (IsVisible(players)) then  color = ESPColorVisible else color = ESPColorInvisible end
             local right, down, left, up = calcBoundedBoxes(players) -- x = right, y = down, w = left, h = up
-            surface.SetDrawColor(Color(255, 0, 0))
+            surface.SetDrawColor(color)
             surface.DrawLine(left, down, left, up)
             surface.DrawLine(left, up, right, up)
             surface.DrawLine(right, up, right, down)
             surface.DrawLine(right, down, left, down)
-            draw.SimpleText(players:GetName(), "espfont", (left + right) / 2, up - 10, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            draw.SimpleText("STEAM-NAME: "..players:GetName(), "espfont", (left + right) / 2, up - 10, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            draw.SimpleText("RP-NAME: "..players:getDarkRPVar("rpname"), "espfont", (left + right) / 2, up - 25, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
             draw.SimpleText("HP: " .. tostring(players:Health()), "espfont", (left + right) / 2, down + 10, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            draw.SimpleText("weapon: " .. players:GetActiveWeapon():GetPrintName(), "espfont", (left + right) / 2, down + 25, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            draw.SimpleText("Job: " .. players:getDarkRPVar("job"), "espfont", (left + right) / 2, down + 40, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         end    
     end
     
