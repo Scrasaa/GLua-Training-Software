@@ -369,9 +369,11 @@ hook.Add("CreateMove", "CreateMoveHook", function(cmd)
     if (bRecoilToggle) then 
         local wep = localPlayer:GetActiveWeapon()
         if (wep:GetClass()[1] == "m" and wep:GetClass()[2] == "9" and wep:GetClass()[3] == "k") then 
-            wep.Primary.KickUp  = 0
-            wep.Primary.KickDown = 0      -- Maximum down recoil (skeet)
-            wep.Primary.KickHorizontal = 0       --
+            if (wep.Primary != nil or wep.Primary.KickUp != nil or  wep.Primary.KickDown != nil or wep.Primary.KickHorizontal != nil) then 
+                wep.Primary.KickUp  = 0
+                wep.Primary.KickDown = 0      -- Maximum down recoil (skeet)
+                wep.Primary.KickHorizontal = 0       --
+            end
             wep.ViewModelFOV = 120
             wep.Primary.IronAccuracy = 0
             wep.Secondary.IronFOV = 120
