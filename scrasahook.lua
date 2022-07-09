@@ -17,6 +17,7 @@ local szMenuTitle = "ScrasaHook - Dev Build [0.0.1]"
 --------------------------------- SETTINGS ------------------------------------------
 local bAimbotToggle = false
 local bESPToggle = false
+local bRecoilToggle = false
 local fAimbotFOV = 10
 ---------------------------- GLOBAL VARS ----------------------------------
 function centerTxtX(width, szString)
@@ -132,6 +133,7 @@ function drawMenu()
     local aimbotCheckBox = nil
     local bAimbotCheckBoxCreated = false
     local bAimbotFovSliderCreated = false
+    local bRecoilCheckBoxCreated = false
 
     aimbotButton.Paint = function(self, w, h)
         surface.SetDrawColor(55, 55, 55, 255)
@@ -159,6 +161,20 @@ function drawMenu()
                         fAimbotFOV = value
                     end
                     bAimbotFovSliderCreated = true
+                end
+
+                if (bRecoilCheckBoxCreated == false) then 
+                    local recoilCheckBox = aimbotSubMenu:Add("DCheckBoxLabel")
+                    bAimbotCheckBoxCreated = true
+                    recoilCheckBox:SetPos(aimbotSubMenu:GetWide() * 0.05, aimbotSubMenu:GetTall() * 0.06)
+                    recoilCheckBox:SetText("Recoil ON/OFF (M9K ONLY)")
+                    function recoilCheckBox:OnChange(val)
+                        if val then 
+                            bRecoilToggle = true
+                        else
+                            bRecoilToggle = false
+                        end
+                    end
                 end
 
                 if (aimbotSubMenu != nil and aimbotCheckBox == nil) then 
@@ -348,6 +364,18 @@ hook.Add("CreateMove", "CreateMoveHook", function(cmd)
             local aimbotAngles = calcAngle(localPlayer:EyePos(), pos)
             cmd:SetViewAngles( Angle(aimbotAngles.x, aimbotAngles.y, aimbotAngles.z) )
         end
+    end
+
+ 
+
+    if (bRecoilToggle) then 
+        local wep = localPlayer:GetActiveWeapon()
+        wep.Primary.KickUp  = 0
+        wep.Primary.KickDown = 0      -- Maximum down recoil (skeet)
+        wep.Primary.KickHorizontal = 0       --
+        wep.ViewModelFOV = 120
+        wep.Primary.IronAccuracy = 0
+        wep.Secondary.IronFOV = 120
     end
 
 end)
