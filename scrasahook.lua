@@ -14,8 +14,12 @@ local bToggleDelay = false
 
 local szMenuTitle = "ScrasaHook - Dev Build [0.0.1]"
 
-local bAimbotToggle = false
 
+
+
+--------------------------------- SETTINGS ------------------------------------------
+local bAimbotToggle = false
+local fAimbotFOV = 0.0
 ---------------------------- GLOBAL VARS ----------------------------------
 function centerTxtX(width, szString)
     local strLen = string.len(szString)
@@ -120,6 +124,8 @@ function drawMenu()
     local aimbotSubMenu = nil
     local espSubMenu = nil
     local aimbotCheckBox = nil
+    local bAimbotCheckBoxCreated = false
+    local bAimbotFovSliderCreated = false
 
     aimbotButton.Paint = function(self, w, h)
         surface.SetDrawColor(55, 55, 55, 255)
@@ -135,9 +141,33 @@ function drawMenu()
                 aimbotSubMenu = vgui.Create("SubMenuPanel", mainMenuWindow)
                 aimbotSubMenu:SetPos(menuSidePanel:GetWide(), menuBar:GetTall())   
 
-                if (IsValid(aimbotSubMenu)) then 
-                    
-                end 
+                if (bAimbotFovSliderCreated == false) then
+                    local aimbotFovSlider = aimbotSubMenu:Add("DNumSlider")
+                    aimbotFovSlider:SetPos(aimbotSubMenu:GetWide() * 0.05, aimbotSubMenu:GetTall() * 0.05)
+                    aimbotFovSlider:SetSize(aimbotSubMenu:GetWide() * 0.5, aimbotSubMenu:GetTall() * 0.1)
+                    aimbotFovSlider:SetText("Aimbot FOV")
+                    aimbotFovSlider:SetMin(0)
+                    aimbotFovSlider:SetMax(360)
+
+                    aimbotFovSlider.OnValueChanged = function(self, value)
+                        fAimbotFOV = value
+                    end
+                    bAimbotFovSliderCreated = true
+                end
+
+                if (aimbotSubMenu != nil and aimbotCheckBox == nil) then 
+                    aimbotCheckBox = aimbotSubMenu:Add("DCheckBoxLabel")
+                    bAimbotCheckBoxCreated = true
+                    aimbotCheckBox:SetPos(aimbotSubMenu:GetWide() * 0.05, aimbotSubMenu:GetTall() * 0.025)
+                    aimbotCheckBox:SetText("Aimbot ON/OFF")
+                    function aimbotCheckBox:OnChange(val)
+                        if val then 
+                            bAimbotToggle = true
+                        else
+                            bAimbotToggle = false
+                        end
+                    end
+                end
             end
             bTestPressed = true
             if (IsValid(espSubMenu) and espSubMenu != nil) then 
@@ -152,16 +182,7 @@ function drawMenu()
         end
     end
 
-    if (!IsValid(aimbotCheckBox))  then 
-        aimbotCheckBox = aimbotSubMenu:Add("DCheckBoxLabel")
-        aimbotCheckBox:SetPos(aimbotSubMenu:GetWide() * 0.05, aimbotSubMenu:GetTall() * 0.025)
-        aimbotCheckBox:SetText("Aimbot ON/OFF")
-        if (aimbotCheckBox:GetChecked()) then 
-            bAimbotToggle = true -- is checked
-        else 
-            bAimbotToggle = false -- is not checked
-        end
-    end
+
 
     local espButton = vgui.Create("MenuButtonSidePanel", menuSidePanel)
     espButton:SetPos(espButton:GetX(), aimbotButton:GetTall())
@@ -211,7 +232,7 @@ end -- If Click on a button close all other SubMenuPanels, Need to stay the pane
 
 function calcAngle(vFrom, vTo)
 
-    local retAngles = Vector(0, 0, 0)
+    local retAngles = Angle(0, 0, 0)
 
     local vOrigin = vTo - vFrom
 
@@ -224,21 +245,54 @@ function calcAngle(vFrom, vTo)
     -- x = pitch up down
     -- y = yaw left right
 
+    retAngles:Normalize()
+
     return retAngles
 
+end
+
+function GetClosestByFov(myAngles)
+    local playerList = FindMetaTable("Player")
+    local closestDist = 1000000
+
+    local screenMiddleX = ScrW() / 2
+    local screenMiddleY = ScrH() / 2
+
+    local retPlayer = nil
+
+    for k, v in pairs(player.GetAll()) do 
+        if (v == LocalPlayer() or v == nil) then
+            continue end 
+
+        local entPos = v:GetPos()
+        
+        local cAngles = calcAngle(localPlayer:GetPos(), entPos)
+            -- x left 0-180 right 0-180
+        local currDist = math.abs(cAngles.x - myAngles.x) + math.abs(cAngles.y - myAngles.y)
+        if (currDist < closestDist and currDist < fAimbotFOV) then 
+            closestDist = currDist
+            retPlayer = v
+        end
+        
+    end
+    print (closestDist)
+    return retPlayer
 end
 
 ---------------------------- Aimbot ----------------------------------
 ---------------------------- HOOKS ----------------------------------
 
+
 hook.Add("CreateMove", "CreateMoveHook", function(cmd)
 
-   -- print(bAimbotToggle)
-    if (bAimbotToggle) then
-        local meta = FindMetaTable("Player")
-        -- Aimbot Code Goes Here
-        local aimbotAngles = calcAngle(localPlayer:GetPos(), Entity(2):GetPos())
-        cmd:SetViewAngles( Angle(aimbotAngles.x, aimbotAngles.y, aimbotAngles.z) )
+    if (input.IsShiftDown()) then 
+        if (bAimbotToggle ) then
+            local closestEnt = GetClosestByFov(cmd:GetViewAngles())
+            if (closestEnt == nil) then return end
+            -- Aimbot Code Goes Here
+            local aimbotAngles = calcAngle(localPlayer:GetPos(), closestEnt:GetPos())
+            cmd:SetViewAngles( Angle(aimbotAngles.x, aimbotAngles.y, aimbotAngles.z) )
+        end
     end
 
 end)
@@ -276,6 +330,11 @@ hook.Add("Tick", "InputCheck", function()
         timer.Simple( 0.5, function() bToggleDelay = !bToggleDelay end)
 
     end
+
+    hook.Add( "HUDPaint", "DrawHUD", function()
+
+        surface.DrawCircle( ScrW()/2, ScrH()/2, fAimbotFOV * 10, Color( 255, 120, 0 ) )
+    end )
     
 end)
 
