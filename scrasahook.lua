@@ -14,12 +14,10 @@ local bToggleDelay = false
 
 local szMenuTitle = "ScrasaHook - Dev Build [0.0.1]"
 
-
-
-
 --------------------------------- SETTINGS ------------------------------------------
 local bAimbotToggle = false
-local fAimbotFOV = 0.0
+local bESPToggle = false
+local fAimbotFOV = 10
 ---------------------------- GLOBAL VARS ----------------------------------
 function centerTxtX(width, szString)
     local strLen = string.len(szString)
@@ -32,6 +30,14 @@ surface.CreateFont( "fMenuTitle", {
     extended = false,
     size = 23,
     weight = 500,
+} )
+
+surface.CreateFont( "espfont", {
+    font = "System", 
+    extended = false,
+    size = 15,
+    weight = 500,
+    outline = true,
 } )
 
 function drawMenu()
@@ -115,7 +121,7 @@ function drawMenu()
 
     vgui.Register("SubMenuPanel", menuSubMenus, "DPanel")
 
------------------------------TEST BUTTON------------------------------
+-----------------------------SETUP MENU------------------------------
 
     local aimbotButton = vgui.Create("MenuButtonSidePanel", menuSidePanel)
 
@@ -198,6 +204,9 @@ function drawMenu()
 
     local bTestPressed2 = false
 
+    local bESPCheckBoxCreated = false
+
+
     espButton.DoClick = function()
         if (bTestPressed2 == false) then
             if (espSubMenu == nil) then
@@ -208,6 +217,22 @@ function drawMenu()
                     surface.SetDrawColor(50, 50, 50)
                     surface.DrawRect(0, 0, w, h)
                 end
+
+                
+                if (espSubMenu != nil) then 
+                    local espCheckBox = espSubMenu:Add("DCheckBoxLabel")
+                    bESPCheckBoxCreated = true
+                    espCheckBox:SetPos(espSubMenu:GetWide() * 0.05, espSubMenu:GetTall() * 0.025)
+                    espCheckBox:SetText("ESP ON/OFF")
+                    function espCheckBox:OnChange(val)
+                        if val then 
+                            bESPToggle = true
+                        else
+                            bESPToggle = false
+                        end
+                    end
+                end
+
             end
             -- Closes other subMenuPanel so its not drawing over it~ just a little performance
             bTestPressed2 = true
@@ -280,17 +305,52 @@ function GetClosestByFov(myAngles)
 end
 
 ---------------------------- Aimbot ----------------------------------
+---------------------------- ESP ----------------------------------
+function calcBoundedBoxes(players)
+
+    local vMin = players:OBBMins()
+    local vMax = players:OBBMaxs()
+
+    local points = {
+        Vector(vMin.x, vMin.y, vMin.z), //blb
+        Vector(vMin.x, vMax.y, vMin.z), //brb
+        Vector(vMax.x, vMax.y, vMin.z), // frb
+        Vector(vMax.x, vMin.y, vMin.z), // flb
+        Vector(vMax.x, vMax.y, vMax.z), // frt
+        Vector(vMin.x, vMax.y, vMax.z), // brt
+        Vector(vMin.x, vMin.y, vMax.z), // blt
+        Vector(vMax.x, vMin.y, vMax.z), // flt
+    }
+
+    local x, y, w, h = nil
+
+    for key, v in pairs(points) do 
+        local screenPos = players:LocalToWorld( v ):ToScreen()
+        if (x != nil) then 
+            x = math.max( x, screenPos.x )
+            y = math.max( y, screenPos.y)
+            w = math.min( w, screenPos.x)
+            h = math.min( h, screenPos.y)
+        else 
+            x, y, w, h = screenPos.x, screenPos.y, screenPos.x, screenPos.y
+        end
+    end
+    return x, y, w, h
+end
+---------------------------- ESP ----------------------------------
 ---------------------------- HOOKS ----------------------------------
 
 
 hook.Add("CreateMove", "CreateMoveHook", function(cmd)
 
     if (input.IsShiftDown()) then 
-        if (bAimbotToggle ) then
+        if (bAimbotToggle) then
             local closestEnt = GetClosestByFov(cmd:GetViewAngles())
             if (closestEnt == nil) then return end
             -- Aimbot Code Goes Here
-            local aimbotAngles = calcAngle(localPlayer:GetPos(), closestEnt:GetPos())
+            local matrix = closestEnt:GetBoneMatrix(closestEnt:LookupBone("ValveBiped.Bip01_Head1")) -- head
+            local pos = matrix:GetTranslation()
+            local aimbotAngles = calcAngle(localPlayer:EyePos(), pos)
             cmd:SetViewAngles( Angle(aimbotAngles.x, aimbotAngles.y, aimbotAngles.z) )
         end
     end
@@ -330,12 +390,30 @@ hook.Add("Tick", "InputCheck", function()
         timer.Simple( 0.5, function() bToggleDelay = !bToggleDelay end)
 
     end
-
-    hook.Add( "HUDPaint", "DrawHUD", function()
-
-        surface.DrawCircle( ScrW()/2, ScrH()/2, fAimbotFOV * 10, Color( 255, 120, 0 ) )
-    end )
     
 end)
+
+hook.Add( "HUDPaint", "DrawHUD", function()
+    
+    if (bESPToggle) then  
+        surface.DrawCircle( ScrW()/2, ScrH()/2, fAimbotFOV * 10, Color( 255, 120, 0 ) )
+
+        for k, players in pairs (player.GetAll()) do 
+            if (players == localPlayer or players == nil or players:Health() <= 0) then continue end
+            local right, down, left, up = calcBoundedBoxes(players) -- x = right, y = down, w = left, h = up
+            surface.SetDrawColor(Color(255, 0, 0))
+            surface.DrawLine(left, down, left, up)
+            surface.DrawLine(left, up, right, up)
+            surface.DrawLine(right, up, right, down)
+            surface.DrawLine(right, down, left, down)
+            draw.SimpleText(players:GetName(), "espfont", (left + right) / 2, up - 10, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            draw.SimpleText("HP: " .. tostring(players:Health()), "espfont", (left + right) / 2, down + 10, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        end    
+    end
+
+
+
+    
+end )
 
 ---------------------------- HOOKS ----------------------------------
