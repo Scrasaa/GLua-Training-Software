@@ -17,6 +17,7 @@ local szMenuTitle = "ScrasaHook - Dev Build [0.0.1]"
 --------------------------------- SETTINGS ------------------------------------------
 local bESPToggle = false
 local bESPdrawVisible = false
+local ESPColor = Color(255, 255, 255, 255)
 local ESPColorVisible = Color(0, 255, 0, 255)
 local ESPColorInvisible = Color(255, 0, 0, 255)
 local bDrawFOVCircle = false
@@ -24,6 +25,7 @@ local bDrawFOVCircle = false
 local bAimbotToggle = false
 local bRecoilToggle = false
 local bAimbotIgnoreJob = false
+local bAimbotLOS = false
 local szJobIgnore = ""
 local bDarkRP = false
 local fAimbotFOV = 10
@@ -131,13 +133,15 @@ function drawMenu()
     vgui.Register("SubMenuPanel", menuSubMenus, "DPanel")
 
 ---------------------------HTML YOUTUBE ---------------------------
-local htmlSubMenu = vgui.Create("SubMenuPanel", mainMenuWindow)
-htmlSubMenu:SetPos(menuSidePanel:GetWide(), menuBar:GetTall())   
-local htmlPanel = htmlSubMenu:Add("DHTML")
-htmlPanel:SetPos(menuSidePanel:GetWide(), menuBar:GetTall())
-htmlPanel:SetSize(mainMenuWindow:GetWide() - menuSidePanel:GetWide(), menuSidePanel:GetTall())
-htmlPanel:Dock(FILL)
-htmlPanel:OpenURL("https://www.youtube.de/")
+
+    local htmlSubMenu = vgui.Create("SubMenuPanel", mainMenuWindow)
+    htmlSubMenu:SetPos(menuSidePanel:GetWide(), menuBar:GetTall())   
+    local htmlPanel = htmlSubMenu:Add("DHTML")
+    htmlPanel:SetPos(menuSidePanel:GetWide(), menuBar:GetTall())
+    htmlPanel:SetSize(mainMenuWindow:GetWide() - menuSidePanel:GetWide(), menuSidePanel:GetTall())
+    htmlPanel:Dock(FILL)
+    htmlPanel:OpenURL("https://www.youtube.de/")
+
 ---------------------------HTML YOUTUBE ---------------------------
 
 -----------------------------SETUP MENU------------------------------
@@ -166,7 +170,7 @@ htmlPanel:OpenURL("https://www.youtube.de/")
 
 
                 local aimbotFovSlider = aimbotSubMenu:Add("DNumSlider")
-                aimbotFovSlider:SetPos(aimbotSubMenu:GetWide() * 0.05, aimbotSubMenu:GetTall() * 0.05)
+                aimbotFovSlider:SetPos(aimbotSubMenu:GetWide() * 0.05, aimbotSubMenu:GetTall() * 0.055)
                 aimbotFovSlider:SetSize(aimbotSubMenu:GetWide() * 0.5, aimbotSubMenu:GetTall() * 0.1)
                 aimbotFovSlider:SetText("Aimbot FOV")
                 aimbotFovSlider:SetMin(0)
@@ -176,6 +180,17 @@ htmlPanel:OpenURL("https://www.youtube.de/")
                     fAimbotFOV = value
                 end
                 bAimbotFovSliderCreated = true
+
+                local aimbotLOSCheckBox = aimbotSubMenu:Add("DCheckBoxLabel")
+                aimbotLOSCheckBox:SetPos(aimbotSubMenu:GetWide() * 0.05, aimbotSubMenu:GetTall() * 0.125)
+                aimbotLOSCheckBox:SetText("Visible Check ON/OFF")
+                function aimbotLOSCheckBox:OnChange(val) 
+                    if (val) then
+                        bAimbotLOS = true 
+                    else 
+                        bAimbotLOS = false
+                    end
+                end
 
                 local recoilCheckBox = aimbotSubMenu:Add("DCheckBoxLabel")
                 recoilCheckBox:SetPos(aimbotSubMenu:GetWide() * 0.05, aimbotSubMenu:GetTall() * 0.06)
@@ -289,6 +304,13 @@ htmlPanel:OpenURL("https://www.youtube.de/")
                         end
                     end
 
+                    local espColorPalette = espSubMenu:Add("DColorMixer")
+                    espColorPalette:SetPos(espSubMenu:GetWide() * 0.25, espSubMenu:GetTall() * 0.025)
+                    espColorPalette:SetSize(espSubMenu:GetWide() * 0.25, espSubMenu:GetTall() * 0.25)
+                    function espColorPalette:ValueChanged(col) 
+                        ESPColor = col
+                    end
+
 
                     local espDrawFOVCircleCheckBox = espSubMenu:Add("DCheckBoxLabel")
                     espDrawFOVCircleCheckBox:SetPos(espSubMenu:GetWide() * 0.05, espSubMenu:GetTall() * 0.075)
@@ -305,7 +327,7 @@ htmlPanel:OpenURL("https://www.youtube.de/")
             end
             -- Closes other subMenuPanel so its not drawing over it~ just a little performance
             bTestPressed2 = true
-            if (IsValid(aimbotSubMenu) and aimbotSubMenu != nil) then 
+            if (IsValid(aimbotSubMenu)) then 
                 aimbotSubMenu:Hide()
             end
             espSubMenu:Show()
@@ -313,6 +335,57 @@ htmlPanel:OpenURL("https://www.youtube.de/")
             bTestPressed2 = false
             if (IsValid(espSubMenu)) then
                 espSubMenu:Hide()
+            end
+        end
+    end
+
+    local flappyBirdButton = vgui.Create("MenuButtonSidePanel", menuSidePanel)
+    flappyBirdButton:SetPos(flappyBirdButton:GetX(), aimbotButton:GetTall()*2)
+    flappyBirdButton.Paint = function(self, w, h)
+        surface.SetDrawColor(55, 55, 55, 255)
+        surface.DrawRect(0, 0, w, h)
+        surface.SetDrawColor(255, 136, 0, 255)
+        surface.DrawOutlinedRect(0, 0, w, h, 1)
+        draw.DrawText("Flappy Bird", "fMenuTitle", self:GetWide() / 2, self:GetTall() / 5, Color(255, 136, 0), TEXT_ALIGN_CENTER)
+    end
+
+    local bFlappyPressed = false
+    local flappyBirdSubMenu = nil
+
+    flappyBirdButton.DoClick = function()
+        if (bFlappyPressed == false) then 
+
+            if (flappyBirdSubMenu == nil) then 
+                flappyBirdSubMenu = vgui.Create("SubMenuPanel", mainMenuWindow)
+                flappyBirdSubMenu:SetPos(menuSidePanel:GetWide(), menuBar:GetTall())
+
+                flappyBirdSubMenu.Paint = function(self, w, h)
+                    surface.SetDrawColor(50, 50, 50)
+                    surface.DrawRect(0, 0, w, h)
+                end
+
+                local flappyHtml = flappyBirdSubMenu:Add("DHTML")
+                flappyHtml:SetPos(menuSidePanel:GetWide(), menuBar:GetTall())
+                flappyHtml:SetSize(mainMenuWindow:GetWide() - menuSidePanel:GetWide(), menuSidePanel:GetTall())
+                flappyHtml:Dock(FILL)
+                flappyHtml:OpenURL("https://flappybird.io/")
+
+            end
+
+            bFlappyPressed = true
+            if (IsValid(aimbotSubMenu) ) then 
+                aimbotSubMenu:Hide()
+            end
+            if (IsValid(espSubMenu)) then 
+                espSubMenu:Hide() 
+            end
+
+            flappyBirdSubMenu:Show()
+        
+        else
+            bFlappyPressed = false
+            if (IsValid(flappyBirdSubMenu)) then
+                flappyBirdSubMenu:Hide()
             end
         end
     end
@@ -424,6 +497,22 @@ function IsVisible(pEnt)
     )
     return !tr.Hit
 end
+
+function IsShootable(pEnt)
+    local tr = util.TraceLine( 
+        {
+            start = localPlayer:EyePos(),
+            endpos = pEnt:EyePos(),
+            filter = function(ent)
+                if (IsValid(ent) and ent != localPlayer and ent:IsPlayer() and ent:Health() <= 0 and ent == pEnt) then 
+                    return ent
+                end
+            end,
+            mask = MASK_SHOT,
+        }
+    )
+    return !tr.Hit
+end
 ---------------------------- MISC ----------------------------------
 
 ---------------------------- HOOKS ----------------------------------
@@ -439,6 +528,7 @@ hook.Add("CreateMove", "CreateMoveHook", function(cmd)
             local matrix = closestEnt:GetBoneMatrix(closestEnt:LookupBone("ValveBiped.Bip01_Head1")) -- head
             local pos = matrix:GetTranslation()
             local aimbotAngles = calcAngle(localPlayer:EyePos(), pos)
+            if (bAimbotLOS and !IsShootable(closestEnt)) then return end
             cmd:SetViewAngles( Angle(aimbotAngles.x, aimbotAngles.y, aimbotAngles.z) )
         end
     end
@@ -509,14 +599,12 @@ hook.Add( "HUDPaint", "DrawHUD", function()
         
         if (bDrawFOVCircle) then surface.DrawCircle( ScrW()/2, ScrH()/2, fAimbotFOV * 10, Color( 255, 120, 0 ) ) end
 
-        local color = Color(255, 255, 255, 255)
-
         for k, players in pairs (player.GetAll()) do 
             if (players == localPlayer or players == nil or players:Health() <= 0) then continue end
             if (bESPdrawVisible) then if (!IsVisible(players)) then continue end end
-            if (IsVisible(players)) then  color = ESPColorVisible else color = ESPColorInvisible end
+            if (IsVisible(players)) then  ESPColor = ESPColorVisible else ESPColor = ESPColorInvisible end
             local right, down, left, up = calcBoundedBoxes(players) -- x = right, y = down, w = left, h = up
-            surface.SetDrawColor(color)
+            surface.SetDrawColor(ESPColor)
             surface.DrawLine(left, down, left, up)
             surface.DrawLine(left, up, right, up)
             surface.DrawLine(right, up, right, down)
