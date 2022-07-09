@@ -188,8 +188,6 @@ function drawMenu()
         end
     end
 
-
-
     local espButton = vgui.Create("MenuButtonSidePanel", menuSidePanel)
     espButton:SetPos(espButton:GetX(), aimbotButton:GetTall())
 
@@ -201,11 +199,9 @@ function drawMenu()
         draw.DrawText("ESP", "fMenuTitle", self:GetWide() / 2, self:GetTall() / 5, Color(255, 136, 0), TEXT_ALIGN_CENTER)
     end
 
-
     local bTestPressed2 = false
 
     local bESPCheckBoxCreated = false
-
 
     espButton.DoClick = function()
         if (bTestPressed2 == false) then
@@ -251,7 +247,6 @@ function drawMenu()
 end -- If Click on a button close all other SubMenuPanels, Need to stay the panel open when its closed, just hide it.
 
 ---------------------------- VGUI SHIT ----------------------------------
-
 
 ---------------------------- Aimbot ----------------------------------
 
@@ -300,11 +295,11 @@ function GetClosestByFov(myAngles)
         end
         
     end
-    print (closestDist)
     return retPlayer
 end
 
 ---------------------------- Aimbot ----------------------------------
+
 ---------------------------- ESP ----------------------------------
 function calcBoundedBoxes(players)
 
@@ -338,8 +333,8 @@ function calcBoundedBoxes(players)
     return x, y, w, h
 end
 ---------------------------- ESP ----------------------------------
----------------------------- HOOKS ----------------------------------
 
+---------------------------- HOOKS ----------------------------------
 
 hook.Add("CreateMove", "CreateMoveHook", function(cmd)
 
@@ -410,9 +405,6 @@ hook.Add( "HUDPaint", "DrawHUD", function()
             draw.SimpleText("HP: " .. tostring(players:Health()), "espfont", (left + right) / 2, down + 10, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         end    
     end
-
-
-
     
 end )
 
