@@ -25,6 +25,7 @@ local bAimbotToggle = false
 local bRecoilToggle = false
 local bAimbotIgnoreJob = false
 local szJobIgnore = ""
+local bDarkRP = false
 local fAimbotFOV = 10
 ---------------------------- GLOBAL VARS ----------------------------------
 function centerTxtX(width, szString)
@@ -129,7 +130,18 @@ function drawMenu()
 
     vgui.Register("SubMenuPanel", menuSubMenus, "DPanel")
 
+---------------------------HTML YOUTUBE ---------------------------
+local htmlSubMenu = vgui.Create("SubMenuPanel", mainMenuWindow)
+htmlSubMenu:SetPos(menuSidePanel:GetWide(), menuBar:GetTall())   
+local htmlPanel = htmlSubMenu:Add("DHTML")
+htmlPanel:SetPos(menuSidePanel:GetWide(), menuBar:GetTall())
+htmlPanel:SetSize(mainMenuWindow:GetWide() - menuSidePanel:GetWide(), menuSidePanel:GetTall())
+htmlPanel:Dock(FILL)
+htmlPanel:OpenURL("https://www.youtube.de/")
+---------------------------HTML YOUTUBE ---------------------------
+
 -----------------------------SETUP MENU------------------------------
+
 
     local aimbotButton = vgui.Create("MenuButtonSidePanel", menuSidePanel)
 
@@ -164,7 +176,6 @@ function drawMenu()
                     fAimbotFOV = value
                 end
                 bAimbotFovSliderCreated = true
-            
 
                 local recoilCheckBox = aimbotSubMenu:Add("DCheckBoxLabel")
                 recoilCheckBox:SetPos(aimbotSubMenu:GetWide() * 0.05, aimbotSubMenu:GetTall() * 0.06)
@@ -423,7 +434,7 @@ hook.Add("CreateMove", "CreateMoveHook", function(cmd)
         if (bAimbotToggle) then
             local closestEnt = GetClosestByFov(cmd:GetViewAngles())
             if (closestEnt == nil) then return end
-            if (bAimbotIgnoreJob and closestEnt:getDarkRPVar("job") == szJobIgnore) then return end
+            if (bAimbotIgnoreJob and bDarkRP and closestEnt:getDarkRPVar("job") == szJobIgnore) then return end
             -- Aimbot Code Goes Here
             local matrix = closestEnt:GetBoneMatrix(closestEnt:LookupBone("ValveBiped.Bip01_Head1")) -- head
             local pos = matrix:GetTranslation()
@@ -488,6 +499,7 @@ hook.Add("Tick", "InputCheck", function()
 
     --("Ent is visible: " .. tostring(IsVisible(Entity(2))) .. " Ent Name: " .. Entity(2):GetName())
     
+    if (engine.ActiveGamemode() == "darkrp") then bDarkRP = true end
 
 end)
 
@@ -509,11 +521,13 @@ hook.Add( "HUDPaint", "DrawHUD", function()
             surface.DrawLine(left, up, right, up)
             surface.DrawLine(right, up, right, down)
             surface.DrawLine(right, down, left, down)
+            if (bDarkRP) then 
+                draw.SimpleText("Job: " .. players:getDarkRPVar("job"), "espfont", (left + right) / 2, down + 40, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+                draw.SimpleText("RP-NAME: "..players:getDarkRPVar("rpname"), "espfont", (left + right) / 2, up - 25, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            end
             draw.SimpleText("STEAM-NAME: "..players:GetName(), "espfont", (left + right) / 2, up - 10, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-            draw.SimpleText("RP-NAME: "..players:getDarkRPVar("rpname"), "espfont", (left + right) / 2, up - 25, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
             draw.SimpleText("HP: " .. tostring(players:Health()), "espfont", (left + right) / 2, down + 10, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
             draw.SimpleText("weapon: " .. players:GetActiveWeapon():GetPrintName(), "espfont", (left + right) / 2, down + 25, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-            draw.SimpleText("Job: " .. players:getDarkRPVar("job"), "espfont", (left + right) / 2, down + 40, Color(255, 255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         end    
     end
     
