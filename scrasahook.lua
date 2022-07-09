@@ -297,7 +297,7 @@ function GetClosestByFov(myAngles)
     local retPlayer = nil
 
     for k, v in pairs(player.GetAll()) do 
-        if (v == LocalPlayer() or v == nil) then
+        if (v == LocalPlayer() or v == nil or v:Health() <= 0) then
             continue end 
 
         local entPos = v:GetPos()
@@ -377,7 +377,7 @@ hook.Add("CreateMove", "CreateMoveHook", function(cmd)
                 wep.Primary.KickHorizontal = 0       --
                 wep.Primary.IronAccuracy = 0
                 wep.Secondary.IronFOV = 120
-                
+
             end
             wep.ViewModelFOV = 120
             
