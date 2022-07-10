@@ -209,7 +209,7 @@ function drawMenu()
                 jobSelectBox:SetValue("Ignore Jobs")
 
                 local jobTable = {}
-
+                if (bDarkRP) then 
                 for _, v in pairs(player.GetAll()) do 
                     if (table.HasValue(jobTable, v:getDarkRPVar("job"))) then continue end
                     table.insert(jobTable, v:getDarkRPVar("job"))
@@ -218,6 +218,7 @@ function drawMenu()
                 jobSelectBox.OnSelect = function(index, value, data)
                     szJobIgnore = data
                     print (value)
+                end 
                 end
 
                 local ignoreJobCheckBox = aimbotSubMenu:Add("DCheckBoxLabel")
@@ -519,7 +520,7 @@ end
 
 hook.Add("CreateMove", "CreateMoveHook", function(cmd)
 
-    if (input.IsShiftDown()) then 
+    if (input.IsButtonDown(MOUSE_5)) then 
         if (bAimbotToggle) then
             local closestEnt = GetClosestByFov(cmd:GetViewAngles())
             if (closestEnt == nil) then return end
