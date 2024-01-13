@@ -66,9 +66,9 @@ local function ShowOnlySubMenu(menuName)
     for name, panel in pairs(subMenus) do
         if IsValid(panel) then 
             if name == menuName then 
-                panel:Show()  -- Corrected to use the variable 'panel'
+                panel:Show()
             else
-                panel:Hide()  -- Corrected to use the variable 'panel'
+                panel:Hide() 
             end
         end
     end
